@@ -54,7 +54,7 @@ jobs:
     name: PR Approve
     runs-on: [self-hosted, Linux, X64, aws]
     steps:
-      - name: Approve 
+      - name: Approve and Merge
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} # Personal Access Token
         run: |
@@ -65,6 +65,8 @@ jobs:
         run: |
           gh pr merge ${{ github.event.pull_request.number }} \
             --merge \
+            --auto \
+            --admin \
             --repo ${{ github.repository }}
 
   job7:
