@@ -1,0 +1,91 @@
+name: Multi-Job Workflow
+
+on:  
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  job1:
+    name: Pull Source Code
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: List Files
+        run: pwd && ls -l
+
+  job2:
+    needs: job1
+    name: Terraform Plan
+    runs-on: [self-hosted, Linux, X64, aws]
+    
+    steps:
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./terraform
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_resource_group_name: ${{ secrets.AZURE_RESOURCE_GROUP_NAME }}
+        run: date && terraform plan -out=tfplan.binary && terraform show -json tfplan.binary > tfplan.json
+
+  job4:
+    needs: job2
+    name: Run Snyk Scan IAC
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+      - name: IAC Scan No Custom Policy
+        working-directory: ./terraform
+        run: snyk iac test --rules=/home/ubuntu/customrules/custom.tar.gz  --report --sarif-file-output=./test_saja --org=pruclement --policy-path=/home/ubuntu/.snyk
+
+  job5:
+    needs: job4
+    name: No Vuln
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+      - name: Display Hostname
+        run: hostname
+  
+  job6:
+    needs: job5
+    name: PR Approve
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+      - name: Approve 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} # Personal Access Token
+        run: |
+          gh pr review ${{ github.event.pull_request.number }} --approve
+      - name: Merge Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --merge \
+            --repo ${{ github.repository }}
+
+  job7:
+    name: Create Issue
+    if: failure() 
+    needs: job4
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+    - name: Create Issue via GitHub CLI
+      env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      run: |
+          gh issue create \
+            --title "Approval Needed for Workflow Execution (Run #: $GITHUB_RUN_NUMBER)" \
+            --body "This issue is automatically created to request checking. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --assignee "langga27"
+
+  job3:
+    needs: job5
+    name: Run IP Address Command
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+      - name: Display IP Address
+        run: ip a && whoami

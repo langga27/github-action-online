@@ -1,0 +1,21 @@
+
+
+on:
+  workflow_dispatch:
+
+jobs:
+  job1:
+    name: Pull Source Code
+    runs-on: [self-hosted, Linux, X64, aws]
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Create Issue via GitHub CLI
+      env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      run: |
+          gh issue create \
+            --title "Approval Needed for Workflow Execution (Run #: $GITHUB_RUN_NUMBER)" \
+            --body "This issue is automatically created to request approval. Please approve by commenting 'approve' on this issue." \
+            --assignee "langga27"
+            
