@@ -65,7 +65,7 @@ jobs:
         run: |
           gh pr merge ${{ github.event.pull_request.number }} \
             --merge \
-            --auto \
+            --admin \
             --repo ${{ github.repository }}
 
   job7:
