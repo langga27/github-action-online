@@ -27,8 +27,8 @@ resource "azurerm_network_security_rule" "example" {
   protocol                    = "Tcp"
   source_port_ranges          = ["8080"]
   destination_port_ranges     = [8079,8081]
-  source_address_prefixes       = ["1.10.10.0/24"] 
-  destination_address_prefixes  = ["10.10.10.0/24"]
+  source_address_prefixes       = ["10.10.10.0/24"] 
+  destination_address_prefixes  = ["1.10.10.0/24"]
   resource_group_name         = azurerm_resource_group.example.name
   network_security_group_name = azurerm_network_security_group.example.name
 }
