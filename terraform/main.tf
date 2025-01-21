@@ -17,7 +17,7 @@ resource "azurerm_resource_group" "example" {
   name     = var.resource_group_name
   location = "Southeast Asia"
 }
-
+#
 
 resource "azurerm_network_security_rule" "example" {
   name                        = "test123"
